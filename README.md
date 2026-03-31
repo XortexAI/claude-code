@@ -1,3 +1,5 @@
+FULL SYSTEM PROMPT -> SYSTEM_PROMPT_EXTRACTED.MD
+
 # Claude Code's Entire Source Code Got Leaked via a Sourcemap in npm, Let's Talk About It
 
 > There's also a non-zero chance this repo might be taken down, so if you want to play around with it later, or archive it yourself, feel free to fork it & bookmark the external blog link !
