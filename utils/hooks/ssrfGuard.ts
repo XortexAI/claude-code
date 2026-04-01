@@ -1,4 +1,4 @@
-import type { AddressFamily, LookupAddress as AxiosLookupAddress } from 'axios'
+import type { AddressFamily, LookupAddress as AxiosLookupAddress } from 'src/utils/axios.js'
 import { lookup as dnsLookup } from 'dns'
 import { isIP } from 'net'
 

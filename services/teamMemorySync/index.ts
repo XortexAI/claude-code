@@ -24,7 +24,7 @@
  *   This avoids module-level mutable state and gives tests natural isolation.
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { createHash } from 'crypto'
 import { mkdir, readdir, readFile, stat, writeFile } from 'fs/promises'
 import { join, relative, sep } from 'path'

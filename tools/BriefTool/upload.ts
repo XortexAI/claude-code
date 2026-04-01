@@ -13,7 +13,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { randomUUID } from 'crypto'
 import { readFile } from 'fs/promises'
 import { basename, extname } from 'path'

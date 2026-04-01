@@ -1,9 +1,8 @@
-import {
-  type ClaudeForChromeContext,
-  createClaudeForChromeMcpServer,
-  type Logger,
-  type PermissionMode,
-} from '@ant/claude-for-chrome-mcp'
+export type ClaudeForChromeContext = any;
+export const createClaudeForChromeMcpServer = () => null;
+export type Logger = any;
+export type PermissionMode = any;
+
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { format } from 'util'
 import { shutdownDatadog } from '../../services/analytics/datadog.js'

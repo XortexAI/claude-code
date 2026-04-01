@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import { getClaudeAIOAuthTokens } from '../auth.js'

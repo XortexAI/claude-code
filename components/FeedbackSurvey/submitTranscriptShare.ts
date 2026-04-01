@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { readFile, stat } from 'fs/promises'
 import type { Message } from '../../types/message.js'
 import { checkAndRefreshOAuthTokenIfNeeded } from '../../utils/auth.js'

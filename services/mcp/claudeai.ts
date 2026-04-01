@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import memoize from 'lodash-es/memoize.js'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import {

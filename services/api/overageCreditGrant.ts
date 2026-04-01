@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { getOauthAccountInfo } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'

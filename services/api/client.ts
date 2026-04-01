@@ -1,4 +1,5 @@
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
+import { GeminiAnthropicClient } from './geminiClient.js'
 import { randomUUID } from 'crypto'
 import type { GoogleAuth } from 'google-auth-library'
 import {
@@ -295,6 +296,13 @@ export async function getAnthropicClient({
     }
     // we have always been lying about the return type - this doesn't support batching or models
     return new AnthropicVertex(vertexArgs) as unknown as Anthropic
+  }
+
+  // Check if we should use Gemini instead of Anthropic
+  const geminiApiKey = process.env.GEMINI_API_KEY
+  if (geminiApiKey) {
+    logForDebugging('[API:auth] Using Gemini API instead of Anthropic')
+    return new GeminiAnthropicClient({ apiKey: geminiApiKey }) as unknown as Anthropic
   }
 
   // Determine authentication method based on available tokens

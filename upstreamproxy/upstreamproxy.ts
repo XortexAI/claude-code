@@ -45,12 +45,12 @@ const NO_PROXY_LIST = [
   // Anthropic API: no upstream route will ever match, and the MITM breaks
   // non-Bun runtimes (Python httpx/certifi doesn't trust the forged CA).
   // Three forms because NO_PROXY parsing differs across runtimes:
-  //   *.anthropic.com  — Bun, curl, Go (glob match)
-  //   .anthropic.com   — Python urllib/httpx (suffix match, strips leading dot)
-  //   anthropic.com    — apex domain fallback
-  'anthropic.com',
-  '.anthropic.com',
-  '*.anthropic.com',
+  //   *.googleapis.com  — Bun, curl, Go (glob match)
+  //   .googleapis.com   — Python urllib/httpx (suffix match, strips leading dot)
+  //   googleapis.com    — apex domain fallback
+  'googleapis.com',
+  '.googleapis.com',
+  '*.googleapis.com',
   'github.com',
   'api.github.com',
   '*.github.com',

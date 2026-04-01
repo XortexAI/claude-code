@@ -10,7 +10,7 @@
  * log.ts has NO heavy dependencies - events are queued until this sink is attached.
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { dirname, join } from 'path'
 import { getSessionId } from '../bootstrap/state.js'
 import { createBufferedWriter } from './bufferedWriter.js'

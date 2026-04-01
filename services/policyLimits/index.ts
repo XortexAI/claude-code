@@ -12,7 +12,7 @@
  * - API returns empty restrictions for users without policy limits
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { createHash } from 'crypto'
 import { readFileSync as fsReadFileSync } from 'fs'
 import { unlink, writeFile } from 'fs/promises'

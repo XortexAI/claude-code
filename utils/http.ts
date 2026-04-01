@@ -2,7 +2,7 @@
  * HTTP utility constants and helpers
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
 import {
   getAnthropicApiKey,

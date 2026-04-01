@@ -2,7 +2,7 @@ import type {
   McpbManifest,
   McpbUserConfigurationOption,
 } from '@anthropic-ai/mcpb'
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { createHash } from 'crypto'
 import { chmod, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'

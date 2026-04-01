@@ -12,7 +12,7 @@
  * - API returns empty settings for users without managed settings
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { createHash } from 'crypto'
 import { open, unlink } from 'fs/promises'
 import { getOauthConfig, OAUTH_BETA_HEADER } from '../../constants/oauth.js'

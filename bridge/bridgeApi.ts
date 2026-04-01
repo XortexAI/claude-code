@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 
 import { debugBody, extractErrorDetail } from './debugUtils.js'
 import {

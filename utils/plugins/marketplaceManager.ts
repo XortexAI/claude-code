@@ -18,7 +18,7 @@
  *                   └── marketplace.json
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { writeFile } from 'fs/promises'
 import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'

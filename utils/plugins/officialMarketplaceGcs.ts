@@ -8,7 +8,7 @@
  * when there's a new SHA. Callers decide fallback behavior on failure.
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { chmod, mkdir, readFile, rename, rm, writeFile } from 'fs/promises'
 import { dirname, join, resolve, sep } from 'path'
 import { waitForScrollIdle } from '../../bootstrap/state.js'

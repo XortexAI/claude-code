@@ -1,3 +1,5 @@
+import '../macro.js'; // Import to set MACRO global before any other code
+
 import { feature } from 'bun:bundle';
 
 // Bugfix for corepack auto-pinning, which adds yarnpkg to peoples' package.jsons

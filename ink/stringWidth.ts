@@ -1,4 +1,5 @@
-import emojiRegex from 'emoji-regex'
+// Mocked emoji-regex
+const emojiRegex = () => /[\u{1F300}-\u{1F6FF}]/gu;
 import { eastAsianWidth } from 'get-east-asian-width'
 import stripAnsi from 'strip-ansi'
 import { getGraphemeSegmenter } from '../utils/intl.js'

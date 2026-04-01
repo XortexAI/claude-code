@@ -7,7 +7,7 @@
  * API Reference: https://docs.anthropic.com/en/api/files-content
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { randomUUID } from 'crypto'
 import * as fs from 'fs/promises'
 import * as path from 'path'

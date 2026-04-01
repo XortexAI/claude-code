@@ -7,7 +7,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { createHash } from 'crypto'
 import { chmod, writeFile } from 'fs/promises'
 import { join } from 'path'

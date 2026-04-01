@@ -10,7 +10,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { mkdir, readFile, stat, writeFile } from 'fs/promises'
 import pickBy from 'lodash-es/pickBy.js'
 import { dirname } from 'path'

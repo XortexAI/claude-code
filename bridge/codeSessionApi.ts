@@ -7,7 +7,7 @@
  * accessToken + baseUrl — no implicit auth or config reads.
  */
 
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { jsonStringify } from '../utils/slowOperations.js'

@@ -1,5 +1,5 @@
 // OAuth client for handling authentication flows with Claude services
-import axios from 'axios'
+import axios from 'src/utils/axios.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
