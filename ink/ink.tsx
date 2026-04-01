@@ -181,7 +181,9 @@ export default class Ink {
     autoBind(this);
     if (this.options.patchConsole) {
       this.restoreConsole = this.patchConsole();
-      this.restoreStderr = this.patchStderr();
+      // patchStderr disabled: causes hang under Bun runtime due to
+      // intercepting process.stderr.write during initialization
+      // this.restoreStderr = this.patchStderr();
     }
     this.terminal = {
       stdout: options.stdout,
@@ -209,11 +211,40 @@ export default class Ink {
     // a one-keystroke lag. Same event-loop tick, so throughput is unchanged.
     // Test env uses onImmediateRender (direct onRender, no throttle) so
     // existing synchronous lastFrame() tests are unaffected.
-    const deferredRender = (): void => queueMicrotask(this.onRender);
-    this.scheduleRender = throttle(deferredRender, FRAME_INTERVAL_MS, {
-      leading: true,
-      trailing: true
-    });
+    // Bun compatibility: lodash throttle + queueMicrotask/setTimeout don't
+    // reliably fire because render() is called synchronously in a tight loop
+    // that never yields to the event loop. We use a two-pronged approach:
+    // 1. Synchronous throttle caps onRender at ~60fps during the burst
+    // 2. A trailing setTimeout ensures the FINAL state always gets painted
+    //    after the synchronous loop yields back to the event loop
+    let lastRenderTime = 0;
+    let trailingTimer: ReturnType<typeof setTimeout> | null = null;
+    this.scheduleRender = () => {
+      const now = performance.now();
+      if (now - lastRenderTime >= FRAME_INTERVAL_MS) {
+        lastRenderTime = now;
+        if (trailingTimer !== null) {
+          clearTimeout(trailingTimer);
+          trailingTimer = null;
+        }
+        this.onRender();
+      } else {
+        // Schedule a trailing render so the final state is always painted
+        if (trailingTimer === null) {
+          trailingTimer = setTimeout(() => {
+            trailingTimer = null;
+            lastRenderTime = performance.now();
+            this.onRender();
+          }, FRAME_INTERVAL_MS);
+        }
+      }
+    };
+    (this.scheduleRender as any).cancel = () => {
+      if (trailingTimer !== null) {
+        clearTimeout(trailingTimer);
+        trailingTimer = null;
+      }
+    };
 
     // Ignore last render after unmounting a tree to prevent empty output before exit
     this.isUnmounted = false;

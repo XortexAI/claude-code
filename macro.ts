@@ -1,7 +1,7 @@
 // Build-time macros - stubbed for development
 
 export const MACRO = {
-  VERSION: '0.1.0-dev (xcode)',
+  VERSION: '2.0.0-dev (xcode)',
   VERSION_CHANGELOG: '',
   NATIVE_PACKAGE_URL: '@anthropic-ai/claude-code-native',
   CLI_BIN_PATH: './cli.tsx',

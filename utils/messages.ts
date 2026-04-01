@@ -687,6 +687,12 @@ export function extractTag(html: string, tagName: string): string | null {
 }
 
 export function isNotEmptyMessage(message: Message): boolean {
+  // Handle undefined or null message
+  if (!message) return false;
+  
+  // Handle messages that might not have .message property
+  const innerMessage = message.message;
+  
   if (
     message.type === 'progress' ||
     message.type === 'attachment' ||
@@ -695,11 +701,13 @@ export function isNotEmptyMessage(message: Message): boolean {
     return true
   }
 
-  if (typeof message.message.content === 'string') {
-    return message.message.content.trim().length > 0
+  if (!innerMessage) return false;
+  
+  if (typeof innerMessage.content === 'string') {
+    return innerMessage.content.trim().length > 0
   }
 
-  if (message.message.content.length === 0) {
+  if (innerMessage.content.length === 0) {
     return false
   }
 

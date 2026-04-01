@@ -19,13 +19,21 @@ export function convertToGeminiTools(tools: Tool[]): FunctionDeclaration[] {
 }
 
 export function convertToGeminiMessages(messages: Message[]): Content[] {
-  return messages.map((msg) => {
-    const role = msg.role === 'assistant' ? 'model' : 'user';
+  const result: Content[] = [];
+  
+  for (let idx = 0; idx < messages.length; idx++) {
+    const msg = messages[idx] as any;
+    
+    // Handle wrapped message format: {type, message: {role, content}, ...}
+    // or direct format: {role, content, ...}
+    const innerMsg = msg.message || msg;
+    const role = innerMsg.role === 'assistant' ? 'model' : 'user';
     const parts: Part[] = [];
-
-    // Assuming msg.content is an array of Anthropic-style blocks
-    if (Array.isArray(msg.content)) {
-      for (const block of msg.content as any[]) {
+    
+    const content = innerMsg.content ?? msg.content;
+    
+    if (Array.isArray(content)) {
+      for (const block of content) {
         if (block.type === 'text') {
           parts.push({ text: block.text });
         } else if (block.type === 'tool_use') {
@@ -44,10 +52,17 @@ export function convertToGeminiMessages(messages: Message[]): Content[] {
           });
         }
       }
-    } else if (typeof msg.content === 'string') {
-      parts.push({ text: msg.content });
+    } else if (typeof content === 'string') {
+      if (content.trim()) {
+        parts.push({ text: content });
+      }
     }
 
-    return { role, parts };
-  });
+    // Only add messages that have content
+    if (parts.length > 0) {
+      result.push({ role, parts });
+    }
+  }
+  
+  return result;
 }

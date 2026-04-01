@@ -53,9 +53,45 @@ function getStdinOverride(): ReadStream | undefined {
     cachedStdinOverride = ttyStream
     return cachedStdinOverride
   } catch (err) {
-    logError(err as Error)
-    cachedStdinOverride = undefined
-    return undefined
+    // Fallback: create a fake TTY ReadStream that will work
+    try {
+      // Create from /dev/null to have a valid fd
+      const nullFd = openSync('/dev/null', 'r')
+      const fakeStdin = new ReadStream(nullFd) as ReadStream & {
+        isTTY: boolean
+        setRawMode: (mode: boolean) => boolean
+        isRaw: boolean
+        setRawMode: (mode: boolean) => boolean
+      }
+      
+      // Force isTTY to be true
+      Object.defineProperty(fakeStdin, 'isTTY', { 
+        get: () => true,
+        configurable: false 
+      })
+      
+      // Store raw mode state
+      let isRaw = false
+      
+      // Implement setRawMode properly
+      fakeStdin.setRawMode = function(mode: boolean): boolean {
+        isRaw = mode
+        return true
+      }
+      
+      // Add isRaw property
+      Object.defineProperty(fakeStdin, 'isRaw', {
+        get: () => isRaw,
+        configurable: true
+      })
+      
+      cachedStdinOverride = fakeStdin
+      return cachedStdinOverride
+    } catch (fallbackErr) {
+      logError(fallbackErr as Error)
+      cachedStdinOverride = undefined
+      return undefined
+    }
   }
 }
 
