@@ -14,7 +14,7 @@ export interface QueryWithModelOptions {
 export async function queryModelWithoutStreaming({
   systemPrompt,
   messages,
-  model = 'gemini-2.5-flash',
+  model = 'gemini-2.5-pro',
   tools = [],
 }: {
   systemPrompt: SystemPrompt;
@@ -80,12 +80,16 @@ export async function* queryWithModel({
   options: QueryWithModelOptions;
 }): AsyncGenerator<StreamEvent, AssistantMessage, void> {
   const tools = options.tools || [];
+  process.stderr.write(`[DBG] queryWithModel received ${tools.length} tools\n`);
+  for (const t of tools) {
+    process.stderr.write(`[DBG] Tool: ${t.name} - ${typeof t.description}\n`);
+  }
   const geminiTools = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
 
   process.stderr.write(`[DBG Gemini] userPrompt: "${userPrompt.substring(0, 100)}..."\n`);
 
   const generativeModel = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.5-pro',
     tools: geminiTools as any,
     systemInstruction: {
       role: 'system',
@@ -200,12 +204,16 @@ export async function* queryModelWithStreaming(options: any) {
   const systemPrompt = options.systemPrompt;
   
   const tools = options.tools || [];
+  process.stderr.write(`[DBG] queryModelWithStreaming received ${tools.length} tools\n`);
+  for (const t of tools) {
+    process.stderr.write(`[DBG] Tool: ${t.name} - ${typeof t.description}\n`);
+  }
   const geminiTools = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
 
   const systemText = Array.isArray(systemPrompt) ? systemPrompt.join('\n') : (systemPrompt as string || '');
 
   const generativeModel = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.5-pro',
     tools: geminiTools as any,
     systemInstruction: {
       role: 'system',
@@ -245,36 +253,69 @@ export async function* queryModelWithStreaming(options: any) {
         }
       }
     } else {
+      // Accumulate text chunks and yield as a single message at the end
+      let allTextParts: string[] = [];
+      
       for await (const chunk of result.stream) {
         const parts = chunk.candidates?.[0]?.content?.parts || [];
+        
         for (const part of parts) {
           if (part.text) {
-            const assistantMessage = {
+            // Accumulate text
+            allTextParts.push(part.text);
+          } else if (part.functionCall) {
+            // When we get a function call, first yield any accumulated text
+            if (allTextParts.length > 0) {
+              const combinedText = allTextParts.join('');
+              const assistantMessage = {
+                type: 'assistant' as const,
+                message: {
+                  role: 'assistant' as const,
+                  content: [{ type: 'text' as const, text: combinedText }],
+                },
+                uuid: crypto.randomUUID(),
+              };
+              yield assistantMessage;
+              content.push({ type: 'text', text: combinedText });
+              allTextParts = [];
+            }
+            
+            // Then yield the tool use
+            const toolUseId = `call_${Math.random().toString(36).substring(7)}`;
+            const toolUse = {
+              type: 'tool_use' as const,
+              id: toolUseId,
+              name: part.functionCall.name,
+              input: part.functionCall.args || {},
+            };
+            
+            const toolMessage = {
               type: 'assistant' as const,
               message: {
                 role: 'assistant' as const,
-                content: [{ type: 'text' as const, text: part.text }],
+                content: [toolUse],
               },
               uuid: crypto.randomUUID(),
             };
-            yield assistantMessage;
-            
-            if (content.length > 0 && content[content.length - 1].type === 'text') {
-              content[content.length - 1].text += part.text;
-            } else {
-              content.push({ type: 'text', text: part.text });
-            }
-          } else if (part.functionCall) {
-            const toolUse = {
-              type: 'tool_use',
-              id: `call_${Math.random().toString(36).substring(7)}`,
-              name: part.functionCall.name,
-              input: part.functionCall.args,
-            };
-            yield toolUse as any;
+            yield toolMessage;
             content.push(toolUse);
           }
         }
+      }
+      
+      // Yield any remaining accumulated text at the end
+      if (allTextParts.length > 0) {
+        const combinedText = allTextParts.join('');
+        const assistantMessage = {
+          type: 'assistant' as const,
+          message: {
+            role: 'assistant' as const,
+            content: [{ type: 'text' as const, text: combinedText }],
+          },
+          uuid: crypto.randomUUID(),
+        };
+        yield assistantMessage;
+        content.push({ type: 'text', text: combinedText });
       }
     }
   } catch (streamErr: any) {

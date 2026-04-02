@@ -247,17 +247,17 @@ export class GeminiAnthropicClient {
 
         // Map Anthropic model names to Gemini models
         const modelMap: Record<string, string> = {
-          'claude-sonnet-4-6': 'gemini-2.5-flash',
-          'claude-sonnet-4-6': 'gemini-2.5-flash',
-          'claude-3-7-sonnet': 'gemini-2.5-flash',
-          'claude-3-5-sonnet': 'gemini-2.5-flash',
-          'claude-3-5-haiku': 'gemini-2.5-flash',
-          'claude-haiku-4-5': 'gemini-2.5-flash',
-          'claude-3-opus': 'gemini-2.5-flash',
-          'claude-opus-4': 'gemini-2.5-flash',
+          'claude-sonnet-4-6': 'gemini-2.5-pro',
+          'claude-sonnet-4-6': 'gemini-2.5-pro',
+          'claude-3-7-sonnet': 'gemini-2.5-pro',
+          'claude-3-5-sonnet': 'gemini-2.5-pro',
+          'claude-3-5-haiku': 'gemini-2.5-pro',
+          'claude-haiku-4-5': 'gemini-2.5-pro',
+          'claude-3-opus': 'gemini-2.5-pro',
+          'claude-opus-4': 'gemini-2.5-pro',
         };
 
-        const geminiModel = modelMap[params.model] || 'gemini-2.5-flash';
+        const geminiModel = modelMap[params.model] || 'gemini-2.5-pro';
 
         const generator = createGeminiStream(
           geminiModel,
