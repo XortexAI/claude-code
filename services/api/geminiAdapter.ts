@@ -5,32 +5,51 @@ import type {
 } from '@google/generative-ai';
 import type { Tool } from '../../Tool.js';
 import type { Message } from '../../types/message.js';
+import { zodToJsonSchema } from '../../utils/zodToJsonSchema.js';
 
 export function convertToGeminiTools(tools: Tool[]): FunctionDeclaration[] {
-  // Add extra tools that might be filtered out but are useful
-  const extraTools: FunctionDeclaration[] = [
-    { name: 'Glob', description: 'Find files matching a glob pattern like *.ts, **/*.tsx', parameters: { type: 'object', properties: { path: { type: 'string', description: 'Glob pattern' }, exclude: { type: 'string', description: 'Patterns to exclude' } }, required: ['path'] }},
-    { name: 'Grep', description: 'Search for text/content in files', parameters: { type: 'object', properties: { pattern: { type: 'string', description: 'Text to search for' }, path: { type: 'string', description: 'File path or glob' }, exclude: { type: 'string', description: 'Patterns to exclude' } }, required: ['pattern'] }},
-    { name: 'WebSearch', description: 'Search the web for information', parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search query' } }, required: ['query'] }},
-    { name: 'WebFetch', description: 'Fetch content from a URL', parameters: { type: 'object', properties: { url: { type: 'string', description: 'URL to fetch' } }, required: ['url'] }},
-  ];
-  
-  const toolDecls = tools.map((tool) => {
-    const desc = typeof tool.description === 'string' ? tool.description : String(tool.description || '');
+  return tools.map((tool) => {
+    const desc = typeof tool.description === 'string'
+      ? tool.description
+      : (tool.searchHint || (tool.userFacingName ? tool.userFacingName({}) : `A tool for ${tool.name}`));
+    
+    const jsonSchema: any = 'inputJSONSchema' in tool && tool.inputJSONSchema
+      ? tool.inputJSONSchema
+      : zodToJsonSchema(tool.inputSchema);
+      
+    // Strip $schema if it exists, as Gemini might reject it
+    const { $schema, ...parameters } = jsonSchema || {};
+    
+    // Gemini also rejects additionalProperties in objects and propertyNames
+    // We need to recursively strip these out
+    const cleanSchema = (schema: any): any => {
+      if (!schema || typeof schema !== 'object') return schema;
+      
+      if (Array.isArray(schema)) {
+        return schema.map(cleanSchema);
+      }
+      
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(schema)) {
+        if (key === 'additionalProperties' || key === 'propertyNames' || key === 'exclusiveMinimum') {
+          continue;
+        }
+        if (key === 'const') {
+           // Gemini does not support const, map it to enum
+           cleaned['enum'] = [value];
+           continue;
+        }
+        cleaned[key] = cleanSchema(value);
+      }
+      return cleaned;
+    };
     
     return {
       name: tool.name,
       description: desc,
-      parameters: {
-        type: 'object',
-        properties: (tool.inputJSONSchema as any)?.properties || {},
-        required: (tool.inputJSONSchema as any)?.required || [],
-      },
+      parameters: cleanSchema(parameters) as any,
     };
   });
-  
-  // Combine original tools with extra ones
-  return [...toolDecls, ...extraTools];
 }
 
 export function convertToGeminiMessages(messages: Message[]): Content[] {
