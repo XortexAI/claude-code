@@ -375,7 +375,7 @@ export function getPublicModelDisplayName(model: ModelName): string | null {
     case getModelStrings().sonnet35:
       return 'Sonnet 3.5'
     case getModelStrings().haiku45:
-      return 'Haiku 4.5'
+      return 'gemini-2.5-pro'
     case getModelStrings().haiku35:
       return 'Haiku 3.5'
     default:

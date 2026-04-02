@@ -296,9 +296,9 @@ async function main(): Promise<void> {
     main: cliMain
   } = await import('../main.js');
   profileCheckpoint('cli_after_main_import');
-  process.stderr.write("[DBG] cli: calling cliMain()...\n");
+  // process.stderr.write("[DBG] cli: calling cliMain()...\n");
   await cliMain();
-  process.stderr.write("[DBG] cli: cliMain returned\n");
+  // process.stderr.write("[DBG] cli: cliMain returned\n");
   profileCheckpoint('cli_after_main_complete');
 }
 

@@ -90,10 +90,10 @@ export async function* queryWithModel({
   options: QueryWithModelOptions | any;
 }): AsyncGenerator<StreamEvent, AssistantMessage, void> {
   const tools = options.tools || [];
-  process.stderr.write(`[DBG] queryWithModel received ${tools.length} tools\n`);
-  for (const t of tools) {
-    process.stderr.write(`[DBG] Tool: ${t.name} - ${typeof t.description}\n`);
-  }
+  // process.stderr.write(`[DBG] queryWithModel received ${tools.length} tools\n`);
+  // for (const t of tools) {
+  //   process.stderr.write(`[DBG] Tool: ${t.name} - ${typeof t.description}\n`);
+  // }
   let geminiTools: any = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
 
   const extraSchemas = options.extraToolSchemas || [];
@@ -222,10 +222,10 @@ export async function* queryModelWithStreaming(options: any) {
   const systemPrompt = options.systemPrompt;
   
   const tools = options.tools || [];
-  process.stderr.write(`[DBG] queryModelWithStreaming received ${tools.length} tools\n`);
-  for (const t of tools) {
-    process.stderr.write(`[DBG] Tool: ${t.name} - ${typeof t.description}\n`);
-  }
+  // process.stderr.write(`[DBG] queryModelWithStreaming received ${tools.length} tools\n`);
+  // for (const t of tools) {
+  //   process.stderr.write(`[DBG] Tool: ${t.name} - ${typeof t.description}\n`);
+  // }
   let geminiTools: any = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
 
   // Check if web search schema is explicitly provided in extraToolSchemas
