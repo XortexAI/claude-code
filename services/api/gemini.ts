@@ -16,13 +16,23 @@ export async function queryModelWithoutStreaming({
   messages,
   model = 'gemini-2.5-pro',
   tools = [],
+  options = {} as any,
 }: {
   systemPrompt: SystemPrompt;
   messages: Message[];
   model?: string;
   tools?: Tool[];
+  options?: any;
 }): Promise<AssistantMessage> {
-  const geminiTools = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
+  let geminiTools: any = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
+  
+  const extraSchemas = options.extraToolSchemas || [];
+  const hasWebSearch = extraSchemas.some((s: any) => s.type === 'web_search_20250305' || s.name === 'web_search');
+  
+  if (hasWebSearch) {
+    if (!geminiTools) geminiTools = [];
+    geminiTools.push({ googleSearch: {} });
+  }
   
   const generativeModel = genAI.getGenerativeModel({
     model,
@@ -77,14 +87,22 @@ export async function* queryWithModel({
   systemPrompt: SystemPrompt;
   userPrompt: string;
   signal: AbortSignal;
-  options: QueryWithModelOptions;
+  options: QueryWithModelOptions | any;
 }): AsyncGenerator<StreamEvent, AssistantMessage, void> {
   const tools = options.tools || [];
   process.stderr.write(`[DBG] queryWithModel received ${tools.length} tools\n`);
   for (const t of tools) {
     process.stderr.write(`[DBG] Tool: ${t.name} - ${typeof t.description}\n`);
   }
-  const geminiTools = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
+  let geminiTools: any = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
+
+  const extraSchemas = options.extraToolSchemas || [];
+  const hasWebSearch = extraSchemas.some((s: any) => s.type === 'web_search_20250305' || s.name === 'web_search');
+  
+  if (hasWebSearch) {
+    if (!geminiTools) geminiTools = [];
+    geminiTools.push({ googleSearch: {} });
+  }
 
   process.stderr.write(`[DBG Gemini] userPrompt: "${userPrompt.substring(0, 100)}..."\n`);
 
@@ -208,7 +226,16 @@ export async function* queryModelWithStreaming(options: any) {
   for (const t of tools) {
     process.stderr.write(`[DBG] Tool: ${t.name} - ${typeof t.description}\n`);
   }
-  const geminiTools = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
+  let geminiTools: any = tools.length > 0 ? [{ functionDeclarations: convertToGeminiTools(tools) }] : undefined;
+
+  // Check if web search schema is explicitly provided in extraToolSchemas
+  const extraSchemas = options.options?.extraToolSchemas || [];
+  const hasWebSearch = extraSchemas.some((s: any) => s.type === 'web_search_20250305' || s.name === 'web_search');
+  
+  if (hasWebSearch) {
+    if (!geminiTools) geminiTools = [];
+    geminiTools.push({ googleSearch: {} });
+  }
 
   const systemText = Array.isArray(systemPrompt) ? systemPrompt.join('\n') : (systemPrompt as string || '');
 
