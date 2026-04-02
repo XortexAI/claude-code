@@ -1,5 +1,7 @@
 > This repo might get taken down fork it and bookmark it while you can.
 
+Here is the Demo link - https://drive.google.com/file/d/1nzZKmSSG0z8eHsYR2mfCcbiB4MkPQkD9/view
+
 ## The Memory System Functional, But Surprisingly Basic
 
 This is the part that surprised us most.
@@ -27,3 +29,5 @@ Claude is instructed to check for duplicates before writing but there's no autom
 There's also no retrieval step. The entire index is loaded every turn, and once you hit the 200-line cap, older memories just get silently truncated.
 
 For context on how far the gap is: purpose-built memory layers like **[XMem](https://github.com/XortexAI/XMem)** which uses a judge-before-write pipeline, domain-specific vector retrieval (Pinecone + Neo4j), and works across every AI platform score **97.1% on LongMemEval-S** and **91.5% on LoCoMo**, outperforming every other memory system benchmarked. The difference between "inject a markdown file" and that is the entire unsolved problem of agent memory.
+
+
