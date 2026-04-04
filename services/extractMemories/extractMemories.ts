@@ -61,6 +61,8 @@ import {
   buildExtractCombinedPrompt,
 } from './prompts.js'
 
+import { xmemClient } from '../../utils/xmem.js'
+
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')
   ? (require('../../memdir/teamMemPaths.js') as typeof import('../../memdir/teamMemPaths.js'))
@@ -336,183 +338,68 @@ export function initExtractMemories(): void {
     isTrailingRun?: boolean
   }): Promise<void> {
     const { messages } = context
-    const memoryDir = getAutoMemPath()
-    const newMessageCount = countModelVisibleMessagesSince(
-      messages,
-      lastMemoryMessageUuid,
-    )
-
-    // Mutual exclusion: when the main agent wrote memories, skip the
-    // forked agent and advance the cursor past this range so the next
-    // extraction only considers messages after the main agent's write.
-    if (hasMemoryWritesSince(messages, lastMemoryMessageUuid)) {
-      logForDebugging(
-        '[extractMemories] skipping — conversation already wrote to memory files',
-      )
-      const lastMessage = messages.at(-1)
-      if (lastMessage?.uuid) {
-        lastMemoryMessageUuid = lastMessage.uuid
+    
+    let foundStart = lastMemoryMessageUuid === undefined
+    const newMessages: Message[] = []
+    for (const message of messages) {
+      if (!foundStart) {
+        if (message.uuid === lastMemoryMessageUuid) {
+          foundStart = true
+        }
+        continue
       }
-      logEvent('tengu_extract_memories_skipped_direct_write', {
-        message_count: newMessageCount,
-      })
-      return
-    }
-
-    const teamMemoryEnabled = feature('TEAMMEM')
-      ? teamMemPaths!.isTeamMemoryEnabled()
-      : false
-
-    const skipIndex = getFeatureValue_CACHED_MAY_BE_STALE(
-      'tengu_moth_copse',
-      false,
-    )
-
-    const canUseTool = createAutoMemCanUseTool(memoryDir)
-    const cacheSafeParams = createCacheSafeParams(context)
-
-    // Only run extraction every N eligible turns (tengu_bramble_lintel, default 1).
-    // Trailing extractions (from stashed contexts) skip this check since they
-    // process already-committed work that should not be throttled.
-    if (!isTrailingRun) {
-      turnsSinceLastExtraction++
-      if (
-        turnsSinceLastExtraction <
-        (getFeatureValue_CACHED_MAY_BE_STALE('tengu_bramble_lintel', null) ?? 1)
-      ) {
-        return
+      if (isModelVisibleMessage(message)) {
+        newMessages.push(message)
       }
     }
-    turnsSinceLastExtraction = 0
+
+    if (newMessages.length === 0) return
 
     inProgress = true
-    const startTime = Date.now()
     try {
-      logForDebugging(
-        `[extractMemories] starting — ${newMessageCount} new messages, memoryDir=${memoryDir}`,
-      )
+      let userQuery = ''
+      let agentResponse = ''
 
-      // Pre-inject the memory directory manifest so the agent doesn't spend
-      // a turn on `ls`. Reuses findRelevantMemories' frontmatter scan.
-      // Placed after the throttle gate so skipped turns don't pay the scan cost.
-      const existingMemories = formatMemoryManifest(
-        await scanMemoryFiles(memoryDir, createAbortController().signal),
-      )
+      for (const msg of newMessages) {
+        if (msg.type === 'user') {
+          const content = msg.message.content
+          const text = typeof content === 'string' ? content : (Array.isArray(content) ? content.map(c => c.type === 'text' ? c.text : '').join('\\n') : '')
+          userQuery += text + '\\n'
+        } else if (msg.type === 'assistant') {
+          const content = msg.message.content
+          const text = typeof content === 'string' ? content : (Array.isArray(content) ? content.map(c => c.type === 'text' ? c.text : '').join('\\n') : '')
+          agentResponse += text + '\\n'
+        }
+      }
 
-      const userPrompt =
-        feature('TEAMMEM') && teamMemoryEnabled
-          ? buildExtractCombinedPrompt(
-              newMessageCount,
-              existingMemories,
-              skipIndex,
-            )
-          : buildExtractAutoOnlyPrompt(
-              newMessageCount,
-              existingMemories,
-              skipIndex,
-            )
+      if (userQuery.trim() || agentResponse.trim()) {
+        const logMsg = `[XMem Ingest] Ingesting memory... user_id: 'default_user', query: ${userQuery.trim().substring(0, 50)}...\\n`
+        logForDebugging(logMsg)
+        console.error(logMsg)
 
-      const result = await runForkedAgent({
-        promptMessages: [createUserMessage({ content: userPrompt })],
-        cacheSafeParams,
-        canUseTool,
-        querySource: 'extract_memories',
-        forkLabel: 'extract_memories',
-        // The extractMemories subagent does not need to record to transcript.
-        // Doing so can create race conditions with the main thread.
-        skipTranscript: true,
-        // Well-behaved extractions complete in 2-4 turns (read → write).
-        // A hard cap prevents verification rabbit-holes from burning turns.
-        maxTurns: 5,
-      })
+        await xmemClient.ingest({
+          user_query: userQuery.trim() || 'No user query',
+          agent_response: agentResponse.trim() || 'No agent response',
+          user_id: 'default_user'
+        })
 
-      // Advance the cursor only after a successful run. If the agent errors
-      // out (caught below), the cursor stays put so those messages are
-      // reconsidered on the next extraction.
+        const successMsg = `[XMem Ingest] Successfully ingested memory.\\n`
+        logForDebugging(successMsg)
+        console.error(successMsg)
+      }
+
       const lastMessage = messages.at(-1)
       if (lastMessage?.uuid) {
         lastMemoryMessageUuid = lastMessage.uuid
       }
-
-      const writtenPaths = extractWrittenPaths(result.messages)
-      const turnCount = count(result.messages, m => m.type === 'assistant')
-
-      const totalInput =
-        result.totalUsage.input_tokens +
-        result.totalUsage.cache_creation_input_tokens +
-        result.totalUsage.cache_read_input_tokens
-      const hitPct =
-        totalInput > 0
-          ? (
-              (result.totalUsage.cache_read_input_tokens / totalInput) *
-              100
-            ).toFixed(1)
-          : '0.0'
-      logForDebugging(
-        `[extractMemories] finished — ${writtenPaths.length} files written, cache: read=${result.totalUsage.cache_read_input_tokens} create=${result.totalUsage.cache_creation_input_tokens} input=${result.totalUsage.input_tokens} (${hitPct}% hit)`,
-      )
-
-      if (writtenPaths.length > 0) {
-        logForDebugging(
-          `[extractMemories] memories saved: ${writtenPaths.join(', ')}`,
-        )
-      } else {
-        logForDebugging('[extractMemories] no memories saved this run')
-      }
-
-      // Index file updates are mechanical — the agent touches MEMORY.md to add
-      // a topic link, but the user-visible "memory" is the topic file itself.
-      const memoryPaths = writtenPaths.filter(
-        p => basename(p) !== ENTRYPOINT_NAME,
-      )
-      const teamCount = feature('TEAMMEM')
-        ? count(memoryPaths, teamMemPaths!.isTeamMemPath)
-        : 0
-
-      // Log extraction event with usage from the forked agent
-      logEvent('tengu_extract_memories_extraction', {
-        input_tokens: result.totalUsage.input_tokens,
-        output_tokens: result.totalUsage.output_tokens,
-        cache_read_input_tokens: result.totalUsage.cache_read_input_tokens,
-        cache_creation_input_tokens:
-          result.totalUsage.cache_creation_input_tokens,
-        message_count: newMessageCount,
-        turn_count: turnCount,
-        files_written: writtenPaths.length,
-        memories_saved: memoryPaths.length,
-        team_memories_saved: teamCount,
-        duration_ms: Date.now() - startTime,
-      })
-
-      logForDebugging(
-        `[extractMemories] writtenPaths=${writtenPaths.length} memoryPaths=${memoryPaths.length} appendSystemMessage defined=${appendSystemMessage != null}`,
-      )
-      if (memoryPaths.length > 0) {
-        const msg = createMemorySavedMessage(memoryPaths)
-        if (feature('TEAMMEM')) {
-          msg.teamCount = teamCount
-        }
-        appendSystemMessage?.(msg)
-      }
     } catch (error) {
-      // Extraction is best-effort — log but don't notify on error
-      logForDebugging(`[extractMemories] error: ${error}`)
-      logEvent('tengu_extract_memories_error', {
-        duration_ms: Date.now() - startTime,
-      })
+      logForDebugging(`[extractMemories] xmem ingest error: ${error}`)
     } finally {
       inProgress = false
 
-      // If a call arrived while we were running, run a trailing extraction
-      // with the latest stashed context. The trailing run will compute its
-      // newMessageCount relative to the cursor we just advanced — so it only
-      // picks up messages added between the two calls, not the full history.
       const trailing = pendingContext
       pendingContext = undefined
       if (trailing) {
-        logForDebugging(
-          '[extractMemories] running trailing extraction for stashed context',
-        )
         await runExtraction({
           context: trailing.context,
           appendSystemMessage: trailing.appendSystemMessage,
@@ -528,26 +415,38 @@ export function initExtractMemories(): void {
     context: REPLHookContext,
     appendSystemMessage?: AppendSystemMessageFn,
   ): Promise<void> {
+    console.error(`[Extract Debug] executeExtractMemoriesImpl called. agentId: ${context.toolUseContext.agentId}\\n`)
+
     // Only run for the main agent, not subagents
     if (context.toolUseContext.agentId) {
       return
     }
 
-    if (!getFeatureValue_CACHED_MAY_BE_STALE('tengu_passport_quail', false)) {
-      if (process.env.USER_TYPE === 'ant' && !hasLoggedGateFailure) {
-        hasLoggedGateFailure = true
-        logEvent('tengu_extract_memories_gate_disabled', {})
-      }
-      return
-    }
+    const { getInitialSettings } = await import('../../utils/settings/settings.js')
+    const isXmemEnabled = getInitialSettings().xmemMemoryEnabled
+    
+    console.error(`[Extract Debug] isXmemEnabled: ${isXmemEnabled}\\n`)
 
-    // Check auto-memory is enabled
-    if (!isAutoMemoryEnabled()) {
-      return
+    if (!isXmemEnabled) {
+      if (!getFeatureValue_CACHED_MAY_BE_STALE('tengu_passport_quail', false)) {
+        if (process.env.USER_TYPE === 'ant' && !hasLoggedGateFailure) {
+          hasLoggedGateFailure = true
+          logEvent('tengu_extract_memories_gate_disabled', {})
+        }
+        console.error(`[Extract Debug] aborted: tengu_passport_quail check failed\\n`)
+        return
+      }
+
+      // Check auto-memory is enabled
+      if (!isAutoMemoryEnabled()) {
+        console.error(`[Extract Debug] aborted: auto-memory not enabled\\n`)
+        return
+      }
     }
 
     // Skip in remote mode
     if (getIsRemoteMode()) {
+      console.error(`[Extract Debug] aborted: remote mode\\n`)
       return
     }
 
@@ -560,8 +459,11 @@ export function initExtractMemories(): void {
       )
       logEvent('tengu_extract_memories_coalesced', {})
       pendingContext = { context, appendSystemMessage }
+      console.error(`[Extract Debug] aborted: inProgress (stashed)\\n`)
       return
     }
+
+    console.error(`[Extract Debug] proceeding to runExtraction\\n`)
 
     await runExtraction({ context, appendSystemMessage })
   }

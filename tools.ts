@@ -83,6 +83,9 @@ import { TaskCreateTool } from './tools/TaskCreateTool/TaskCreateTool.js'
 import { TaskGetTool } from './tools/TaskGetTool/TaskGetTool.js'
 import { TaskUpdateTool } from './tools/TaskUpdateTool/TaskUpdateTool.js'
 import { TaskListTool } from './tools/TaskListTool/TaskListTool.js'
+import { XMemIngestTool } from './tools/XMemIngestTool/XMemIngestTool.js'
+import { XMemRetrieveTool } from './tools/XMemRetrieveTool/XMemRetrieveTool.js'
+import { XMemSearchTool } from './tools/XMemSearchTool/XMemSearchTool.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { isToolSearchEnabledOptimistic } from './utils/toolSearch.js'
 import { isTodoV2Enabled } from './utils/tasks.js'
@@ -247,6 +250,10 @@ export function getAllBaseTools(): Tools {
     // Include ToolSearchTool when tool search might be enabled (optimistic check)
     // The actual decision to defer tools happens at request time in claude.ts
     ...(isToolSearchEnabledOptimistic() ? [ToolSearchTool] : []),
+    // XMem Memory tools - always available but only work when XMem is enabled
+    XMemIngestTool,
+    XMemRetrieveTool,
+    XMemSearchTool,
   ]
 }
 

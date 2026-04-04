@@ -318,9 +318,46 @@ export class QueryEngine {
         ? await loadMemoryPrompt()
         : null
 
+    let lastUserQuery = ''
+    if (typeof prompt === 'string') {
+      lastUserQuery = prompt
+    } else if (Array.isArray(prompt)) {
+      lastUserQuery = prompt.map(c => c.type === 'text' ? c.text : '').join('\\n')
+    }
+
+    const xmemContext = await (async () => {
+      const { getInitialSettings } = await import('./utils/settings/settings.js')
+      const settings = getInitialSettings()
+      if (settings.xmemMemoryEnabled && lastUserQuery.trim()) {
+        try {
+          const { logForDebugging } = await import('./utils/debug.js')
+          const logMsg = `[XMem Retrieve] Retrieving memory for user_id: 'default_user' with query: ${lastUserQuery.substring(0, 50)}...\\n`
+          logForDebugging(logMsg)
+          console.error(logMsg)
+
+          const { xmemClient } = await import('./utils/xmem.js')
+          const result = await xmemClient.retrieve({ query: lastUserQuery, user_id: 'default_user' })
+          
+          const successMsg = `[XMem Retrieve] Successfully retrieved memory context.\\n`
+          logForDebugging(successMsg)
+          console.error(successMsg)
+
+          return `## XMem Context\\n\\n${result.answer}`
+        } catch (e) {
+          const { logForDebugging } = await import('./utils/debug.js')
+          const errorMsg = `[XMem Retrieve] Retrieve error: ${e}\\n`
+          logForDebugging(errorMsg)
+          console.error(errorMsg)
+          return null
+        }
+      }
+      return null
+    })()
+
     const systemPrompt = asSystemPrompt([
       ...(customPrompt !== undefined ? [customPrompt] : defaultSystemPrompt),
       ...(memoryMechanicsPrompt ? [memoryMechanicsPrompt] : []),
+      ...(xmemContext ? [xmemContext] : []),
       ...(appendSystemPrompt ? [appendSystemPrompt] : []),
     ])
 

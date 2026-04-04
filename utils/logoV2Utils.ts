@@ -95,10 +95,7 @@ export function calculateOptimalLeftWidth(
  * Formats the welcome message based on username
  */
 export function formatWelcomeMessage(username: string | null): string {
-  if (!username || username.length > MAX_USERNAME_LENGTH) {
-    return 'Welcome back!'
-  }
-  return `Welcome back ${username}!`
+  return 'Welcome to Xcode now you can you have persistent memory.';
 }
 
 /**
@@ -245,7 +242,7 @@ export function getLogoDisplayData(): {
   billingType: string
   agentName: string | undefined
 } {
-  const version = process.env.DEMO_VERSION ?? MACRO.VERSION
+  const version = process.env.DEMO_VERSION ?? '3.0.0'
   const serverUrl = getDirectConnectServerUrl()
   const displayPath = process.env.DEMO_VERSION
     ? '/code/claude'

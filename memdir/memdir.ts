@@ -417,6 +417,10 @@ export function buildSearchingPastContextSection(autoMemDir: string): string[] {
  * Returns null when auto memory is disabled.
  */
 export async function loadMemoryPrompt(): Promise<string | null> {
+  if (getInitialSettings().xmemMemoryEnabled) {
+    return null
+  }
+
   const autoEnabled = isAutoMemoryEnabled()
 
   const skipIndex = getFeatureValue_CACHED_MAY_BE_STALE(
@@ -495,7 +499,7 @@ export async function loadMemoryPrompt(): Promise<string | null> {
     ),
     disabled_by_setting:
       !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY) &&
-      getInitialSettings().autoMemoryEnabled === false,
+      getInitialSettings().xmemMemoryEnabled === false,
   })
   // Gate on the GB flag directly, not isTeamMemoryEnabled() — that function
   // checks isAutoMemoryEnabled() first, which is definitionally false in this

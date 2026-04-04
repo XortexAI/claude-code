@@ -48,8 +48,8 @@ export function isAutoMemoryEnabled(): boolean {
     return false
   }
   const settings = getInitialSettings()
-  if (settings.autoMemoryEnabled !== undefined) {
-    return settings.autoMemoryEnabled
+  if (settings.xmemMemoryEnabled !== undefined) {
+    return settings.xmemMemoryEnabled
   }
   return true
 }
@@ -67,6 +67,11 @@ export function isAutoMemoryEnabled(): boolean {
  * directly in an `if` condition.
  */
 export function isExtractModeActive(): boolean {
+  const isXmemEnabled = getInitialSettings().xmemMemoryEnabled
+  if (isXmemEnabled) {
+    return true
+  }
+
   if (!getFeatureValue_CACHED_MAY_BE_STALE('tengu_passport_quail', false)) {
     return false
   }

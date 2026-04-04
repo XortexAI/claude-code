@@ -935,11 +935,11 @@ export const SettingsSchema = lazySchema(() =>
         .describe(
           'Reduce or disable animations for accessibility (spinner shimmer, flash effects, etc.)',
         ),
-      autoMemoryEnabled: z
+      xmemMemoryEnabled: z
         .boolean()
         .optional()
         .describe(
-          'Enable auto-memory for this project. When false, Claude will not read from or write to the auto-memory directory.',
+          'Enable xmem memory for this project.',
         ),
       autoMemoryDirectory: z
         .string()

@@ -977,7 +977,7 @@ export const getMemoryFiles = memoize(
     }
 
     // Memdir entrypoint (memory.md) - only if feature is on and file exists
-    if (isAutoMemoryEnabled()) {
+    if (isAutoMemoryEnabled() && !getInitialSettings().xmemMemoryEnabled) {
       const { info: memdirEntry } = await safelyReadMemoryFileAsync(
         getAutoMemEntrypoint(),
         'AutoMem',

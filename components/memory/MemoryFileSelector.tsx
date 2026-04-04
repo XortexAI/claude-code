@@ -159,7 +159,7 @@ export function MemoryFileSelector(t0) {
     t1 = $[3];
   }
   const initialPath = t1;
-  const [autoMemoryOn, setAutoMemoryOn] = useState(isAutoMemoryEnabled);
+  const [xmemMemoryOn, setXmemMemoryOn] = useState(isAutoMemoryEnabled);
   const [autoDreamOn, setAutoDreamOn] = useState(isAutoDreamEnabled);
   const [showDreamRow] = useState(isAutoMemoryEnabled);
   const isDreamRunning = useAppState(_temp6);
@@ -201,18 +201,18 @@ export function MemoryFileSelector(t0) {
   const toggleFocused = focusedToggle !== null;
   const lastToggleIndex = showDreamRow ? 1 : 0;
   let t5;
-  if ($[12] !== autoMemoryOn) {
+  if ($[12] !== xmemMemoryOn) {
     t5 = function handleToggleAutoMemory() {
-      const newValue = !autoMemoryOn;
+      const newValue = !xmemMemoryOn;
       updateSettingsForSource("userSettings", {
-        autoMemoryEnabled: newValue
+        xmemMemoryEnabled: newValue
       });
-      setAutoMemoryOn(newValue);
+      setXmemMemoryOn(newValue);
       logEvent("tengu_auto_memory_toggled", {
         enabled: newValue
       });
     };
-    $[12] = autoMemoryOn;
+    $[12] = xmemMemoryOn;
     $[13] = t5;
   } else {
     t5 = $[13];
@@ -321,10 +321,10 @@ export function MemoryFileSelector(t0) {
   }
   useKeybinding("select:previous", t12, t13);
   const t14 = focusedToggle === 0;
-  const t15 = autoMemoryOn ? "on" : "off";
+  const t15 = xmemMemoryOn ? "on" : "off";
   let t16;
   if ($[30] !== t15) {
-    t16 = <Text>Auto-memory: {t15}</Text>;
+    t16 = <Text>XMem Memory: {t15}</Text>;
     $[30] = t15;
     $[31] = t16;
   } else {

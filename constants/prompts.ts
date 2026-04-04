@@ -34,6 +34,9 @@ import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
 import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../tools/AskUserQuestionTool/prompt.js'
+import { XMEM_INGEST_TOOL_NAME } from '../tools/XMemIngestTool/prompt.js'
+import { XMEM_RETRIEVE_TOOL_NAME } from '../tools/XMemRetrieveTool/prompt.js'
+import { XMEM_SEARCH_TOOL_NAME } from '../tools/XMemSearchTool/prompt.js'
 import {
   EXPLORE_AGENT,
   EXPLORE_AGENT_MIN_QUERIES,
@@ -301,11 +304,33 @@ function getUsingYourToolsSection(enabledTools: Set<string>): string {
     `Reserve using the ${BASH_TOOL_NAME} exclusively for system commands and terminal operations that require shell execution. If you are unsure and there is a relevant dedicated tool, default to using the dedicated tool and only fallback on using the ${BASH_TOOL_NAME} tool for these if it is absolutely necessary.`,
   ]
 
+  // Check if XMem memory tools are enabled
+  const xmemIngestEnabled = enabledTools.has(XMEM_INGEST_TOOL_NAME)
+  const xmemRetrieveEnabled = enabledTools.has(XMEM_RETRIEVE_TOOL_NAME)
+  const xmemSearchEnabled = enabledTools.has(XMEM_SEARCH_TOOL_NAME)
+  const hasXmemTools = xmemIngestEnabled || xmemRetrieveEnabled || xmemSearchEnabled
+
   const items = [
     `Do NOT use the ${BASH_TOOL_NAME} to run commands when a relevant dedicated tool is provided. Using dedicated tools allows the user to better understand and review your work. This is CRITICAL to assisting the user:`,
     providedToolSubitems,
     taskToolName
       ? `Break down and manage your work with the ${taskToolName} tool. These tools are helpful for planning your work and helping the user track your progress. Mark each task as completed as soon as you are done with the task. Do not batch up multiple tasks before marking them as completed.`
+      : null,
+    hasXmemTools
+      ? [
+          `# Memory Tools (XMem)`,
+          `You have access to external memory storage via XMem memory tools. Use them automatically when appropriate:`,
+          xmemRetrieveEnabled
+            ? `- **THINK LIKE A HUMAN**: A human mind recalls past knowledge before starting a task. Before using ANY other tools (like reading files or searching code) to solve a problem or start a new task, ALWAYS call ${XMEM_RETRIEVE_TOOL_NAME} first with the context of the user's request. If the memory gives you the answer or context, use it. If no relevant memory is found, ONLY THEN proceed to explore the codebase or solve the issue from scratch. You can also use a hybrid approach: retrieve from memory to get initial context, then use other tools (like file reading or searching) to expand on it. You can call the memory retrieval tool multiple times during a task if new questions arise that might benefit from past context.`
+            : null,
+          xmemIngestEnabled
+            ? `- Call ${XMEM_INGEST_TOOL_NAME} automatically to save important information: when the user shares personal details, establishes project conventions, corrects your understanding, or says "remember this". Store user facts and project knowledge for future sessions.`
+            : null,
+          xmemSearchEnabled
+            ? `- Use ${XMEM_SEARCH_TOOL_NAME} to explore what memories are stored or when the user asks "what do you remember about...". This is useful for memory verification and exploration.`
+            : null,
+          `- **IMPORTANT**: Make these tool calls automatically without asking permission. The memory system is smart and will handle whether to store/retrieve appropriately. You don't need to think about whether something should be remembered - just call the ingest tool when the user shares information worth saving.`,
+        ].filter(s => s !== null).join('\n')
       : null,
     `You can call multiple tools in a single response. If you intend to call multiple tools and there are no dependencies between them, make all independent tool calls in parallel. Maximize use of parallel tool calls where possible to increase efficiency. However, if some tool calls depend on previous calls to inform dependent values, do NOT call these tools in parallel and instead call them sequentially. For instance, if one operation must complete before another starts, run these operations sequentially instead.`,
   ].filter(item => item !== null)
