@@ -95,7 +95,7 @@ export function calculateOptimalLeftWidth(
  * Formats the welcome message based on username
  */
 export function formatWelcomeMessage(username: string | null): string {
-  return 'Welcome to Xcode now you can you have persistent memory.';
+  return 'Welcome to Xcode now you have persistent memory.';
 }
 
 /**

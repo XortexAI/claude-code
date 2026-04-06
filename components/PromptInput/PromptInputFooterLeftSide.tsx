@@ -39,6 +39,9 @@ import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
 import { isXtermJs } from '../../ink/terminal.js';
 import { useHasSelection, useSelection } from '../../ink/hooks/use-selection.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
+import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
+import { renderModelSetting } from '../../utils/model/model.js';
+import { getEffortSuffix } from '../../utils/effort.js';
 import { getPlatform } from '../../utils/platform.js';
 import { PrBadge } from '../PrBadge.js';
 
@@ -322,6 +325,10 @@ function ModeIndicator({
   const viewedTask = viewingAgentTaskId ? tasks[viewingAgentTaskId] : undefined;
   const isViewingTeammate = viewSelectionMode === 'viewing-agent' && viewedTask?.type === 'in_process_teammate';
   const isViewingCompletedTeammate = isViewingTeammate && viewedTask != null && viewedTask.status !== 'running';
+  const _model = useMainLoopModel();
+  const _effortValue = useAppState(s => s.effortValue);
+  const _effortSuffix = getEffortSuffix(_model, _effortValue);
+  const modelDisplayName = renderModelSetting(_model) + _effortSuffix;
   const hasBackgroundTasks = runningTaskCount > 0 || isViewingTeammate;
 
   // Count primary items (permission mode or coordinator mode, background tasks, and teams)
@@ -408,7 +415,7 @@ function ModeIndicator({
   const tasksPart = hasBackgroundTasks && !hasTeammatePills && !shouldHideTasksFooter(tasks, showSpinnerTree) ? <BackgroundTaskStatus tasksSelected={tasksSelected} isViewingTeammate={isViewingTeammate} teammateFooterIndex={teammateFooterIndex} isLeaderIdle={!isLoading} onOpenDialog={onOpenTasksDialog} /> : null;
   if (parts.length === 0 && !tasksPart && !modePart && showHint) {
     parts.push(<Text dimColor key="shortcuts-hint">
-        ? for shortcuts
+        {/* <Text bold>ctrl+t</Text> variants   <Text bold>tab</Text> agents   <Text bold>ctrl+p</Text> commands */}
       </Text>);
   }
 
@@ -457,7 +464,7 @@ function ModeIndicator({
   // is a row stolen from the ScrollBox. This component must have a STABLE
   // height so the footer never grows/shrinks and shifts scroll content.
   // Returning null when parts is empty (e.g. StatusLine on → suppressHint
-  // → showHint=false → no "? for shortcuts") would let a later-added
+  // → showHint=false → no "{modelDisplayName}") would let a later-added
   // part (e.g. the selection copy/native-select hints) grow the column
   // from 0→1 row. Always render 1 row in fullscreen; return a space when
   // empty so Yoga reserves the row without painting anything visible.

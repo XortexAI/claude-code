@@ -5947,8 +5947,9 @@ export function REPL({
         ) : null}
         <CancelRequestHandler {...cancelRequestProps} />
         {transcriptScrollRef ? (
-          <FullscreenLayout
-            scrollRef={scrollRef}
+        <FullscreenLayout
+          isFirstPrompt={messages.length === 0}
+          scrollRef={scrollRef}
             scrollable={
               <>
                 {transcriptMessagesElement}
@@ -6196,6 +6197,7 @@ export function REPL({
         isStrictMcpConfig={strictMcpConfig}
       >
         <FullscreenLayout
+          isFirstPrompt={messages.length === 0}
           scrollRef={scrollRef}
           overlay={toolPermissionOverlay}
           bottomFloat={

@@ -268,7 +268,7 @@ export function computeUnseenDivider(messages: readonly Message[], dividerIndex:
  * so nothing can accidentally render outside it.
  */
 export function FullscreenLayout(t0) {
-  const $ = _c(47);
+  const $ = _c(48);
   const {
     scrollable,
     bottom,
@@ -335,6 +335,7 @@ export function FullscreenLayout(t0) {
     t7 = $[6];
   }
   useLayoutEffect(_temp3, t7);
+  const t100 = t0.isFirstPrompt;
   if (isFullscreenEnvEnabled()) {
     const sticky = hideSticky ? null : stickyPrompt;
     const headerPrompt = sticky != null && sticky !== "clicked" && overlay == null ? sticky : null;
@@ -357,8 +358,8 @@ export function FullscreenLayout(t0) {
       t10 = $[10];
     }
     let t11;
-    if ($[11] !== overlay || $[12] !== scrollRef || $[13] !== t10 || $[14] !== t9) {
-      t11 = <ScrollBox ref={scrollRef} flexGrow={1} flexDirection="column" paddingTop={t9} stickyScroll={true}>{t10}{overlay}</ScrollBox>;
+    if ($[11] !== overlay || $[12] !== scrollRef || $[13] !== t10 || $[14] !== t9 || $[47] !== t100) {
+      t11 = <ScrollBox ref={scrollRef} flexGrow={t100 ? 0 : 1} flexDirection="column" paddingTop={t9} stickyScroll={true}>{t10}{overlay}</ScrollBox>;
       $[11] = overlay;
       $[12] = scrollRef;
       $[13] = t10;
@@ -388,8 +389,8 @@ export function FullscreenLayout(t0) {
       t13 = $[23];
     }
     let t14;
-    if ($[24] !== t11 || $[25] !== t12 || $[26] !== t13 || $[27] !== t8) {
-      t14 = <Box flexGrow={1} flexDirection="column" overflow="hidden">{t8}{t11}{t12}{t13}</Box>;
+    if ($[24] !== t11 || $[25] !== t12 || $[26] !== t13 || $[27] !== t8 || $[47] !== t100) {
+      t14 = <Box flexGrow={t100 ? 0 : 1} flexDirection="column" overflow="hidden" alignItems={t100 ? "center" : undefined}>{t8}{t11}{t12}{t13}</Box>;
       $[24] = t11;
       $[25] = t12;
       $[26] = t13;
@@ -398,20 +399,22 @@ export function FullscreenLayout(t0) {
     } else {
       t14 = $[28];
     }
-    let t15;
+    let t15 = <SuggestionsOverlay isFirstPrompt={t100} />;
     let t16;
-    if ($[29] === Symbol.for("react.memo_cache_sentinel")) {
-      t15 = <SuggestionsOverlay />;
+    if ($[30] === Symbol.for("react.memo_cache_sentinel")) {
       t16 = <DialogOverlay />;
-      $[29] = t15;
       $[30] = t16;
     } else {
-      t15 = $[29];
       t16 = $[30];
     }
     let t17;
-    if ($[31] !== bottom) {
-      t17 = <Box flexDirection="column" flexShrink={0} width="100%" maxHeight="50%">{t15}{t16}<Box flexDirection="column" width="100%" flexGrow={1} overflowY="hidden">{bottom}</Box></Box>;
+    if ($[31] !== bottom || $[47] !== t100) {
+      t17 = <Box flexDirection="column" flexShrink={0} width="100%" maxHeight={t100 ? "100%" : "50%"}>
+        {!t100 && t15}
+        {t16}
+        <Box flexDirection="column" width="100%" flexGrow={t100 ? 0 : 1} overflowY="hidden">{bottom}</Box>
+        {t100 && t15}
+      </Box>;
       $[31] = bottom;
       $[32] = t17;
     } else {
@@ -433,8 +436,20 @@ export function FullscreenLayout(t0) {
       t18 = $[37];
     }
     let t19;
-    if ($[38] !== t14 || $[39] !== t17 || $[40] !== t18) {
-      t19 = <PromptOverlayProvider>{t14}{t17}{t18}</PromptOverlayProvider>;
+    if ($[38] !== t14 || $[39] !== t17 || $[40] !== t18 || $[47] !== t100) {
+      t19 = <PromptOverlayProvider>
+        {t100 ? (
+          <Box flexGrow={1} flexDirection="column" justifyContent="center" alignItems="center" width="100%">
+            {t14}
+            <Box width={Math.floor(columns * 0.6)} flexDirection="column" alignItems="center">
+              {t17}
+            </Box>
+          </Box>
+        ) : (
+          <>{t14}{t17}</>
+        )}
+        {t18}
+      </PromptOverlayProvider>;
       $[38] = t14;
       $[39] = t17;
       $[40] = t18;
@@ -596,23 +611,16 @@ function StickyPromptHeader(t0) {
 // even when the overlay extends above the viewport. We omit minHeight and
 // flex-end here: they would create empty padding rows that shift visible
 // items down into the prompt area when the list has fewer items than max.
-function SuggestionsOverlay() {
-  const $ = _c(4);
+function SuggestionsOverlay({ isFirstPrompt }: { isFirstPrompt?: boolean }) {
   const data = usePromptOverlay();
   if (!data || data.suggestions.length === 0) {
     return null;
   }
-  let t0;
-  if ($[0] !== data.maxColumnWidth || $[1] !== data.selectedSuggestion || $[2] !== data.suggestions) {
-    t0 = <Box position="absolute" bottom="100%" left={0} right={0} paddingX={2} paddingTop={1} flexDirection="column" opaque={true}><PromptInputFooterSuggestions suggestions={data.suggestions} selectedSuggestion={data.selectedSuggestion} maxColumnWidth={data.maxColumnWidth} overlay={true} /></Box>;
-    $[0] = data.maxColumnWidth;
-    $[1] = data.selectedSuggestion;
-    $[2] = data.suggestions;
-    $[3] = t0;
-  } else {
-    t0 = $[3];
-  }
-  return t0;
+  return (
+    <Box position={isFirstPrompt ? undefined : "absolute"} bottom={isFirstPrompt ? undefined : "100%"} left={0} right={0} paddingX={2} paddingTop={1} flexDirection="column" opaque={true}>
+      <PromptInputFooterSuggestions suggestions={data.suggestions} selectedSuggestion={data.selectedSuggestion} maxColumnWidth={data.maxColumnWidth} overlay={true} />
+    </Box>
+  );
 }
 
 // Dialog portaled from PromptInput (AutoModeOptInDialog) — same clip-escape

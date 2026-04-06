@@ -62,8 +62,10 @@ export function usePromptInputPlaceholder({
       promptSuggestionEnabled &&
       !proactiveModule?.isProactiveActive()
     ) {
-      return getExampleCommandFromCache()
+      return "Ask anything..."
     }
+
+    return "Ask anything... you have full memory support now!!"
   }, [
     input,
     queuedCommands,

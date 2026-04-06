@@ -81,7 +81,7 @@ export function CondensedLogo() {
   const truncatedCwd = truncatePath(cwd, Math.max(cwdAvailableWidth, 10));
   let t4;
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = isFullscreenEnvEnabled() ? <AnimatedClawd /> : <Clawd />;
+    t4 = <Clawd />;
     $[7] = t4;
   } else {
     t4 = $[7];
@@ -140,7 +140,7 @@ export function CondensedLogo() {
   }
   let t12;
   if ($[23] !== t10 || $[24] !== t11 || $[25] !== t6 || $[26] !== t7 || $[27] !== t9) {
-    t12 = <OffscreenFreeze><Box flexDirection="row" gap={2} alignItems="center">{t4}<Box flexDirection="column">{t6}{t7}{t9}<Text bold>Welcome to Xcode now you can you have persistent memory.</Text>{t10}{t11}</Box></Box></OffscreenFreeze>;
+    t12 = <OffscreenFreeze><Box width="100%" flexDirection="column" alignItems="center"><Box flexDirection="row" alignItems="center" gap={2}>{t4}{t6}</Box><Text bold align="center">Welcome to Xcode now you have persistent memory.</Text>{t10}{t11}</Box></OffscreenFreeze>;
     $[23] = t10;
     $[24] = t11;
     $[25] = t6;
