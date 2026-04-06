@@ -1,5 +1,9 @@
 > This repo might get taken down fork it and bookmark it while you can.
 
+<p align="center">
+  <img src="https://img.shields.io/github/stars/XortexAI/claude-code?style=social" />
+  <img src="https://img.shields.io/github/forks/XortexAI/claude-code?style=social" />
+</p>
 
 https://github.com/user-attachments/assets/3d765e7f-7bb0-4ed4-8d9e-68d80796a044
 
